@@ -65,6 +65,20 @@ thead th{background:#F0F3F8;color:#33455F;font-weight:600;font-size:13px}
 td .num{font-weight:600}
 .hl td{background:#FDF1EC}
 .hl td:first-child{color:var(--orange);font-weight:600}
+/* ===== 时间轴（复现过程） ===== */
+.tl{list-style:none;margin-top:8px}
+.tl li{position:relative;padding:0 0 20px 58px}
+.tl li::before{content:"";position:absolute;left:18px;top:8px;bottom:-4px;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl .dot{position:absolute;left:9px;top:2px;width:20px;height:20px;border-radius:50%;background:var(--ink);border:4px solid var(--accent);box-sizing:border-box}
+.tl .tc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(15,27,45,.04)}
+.tl .ph{font-size:12px;color:var(--gray);letter-spacing:.08em;margin-bottom:2px}
+.tl .pt{font-size:15.5px;font-weight:700;margin-bottom:6px}
+.tl .pd{font-size:13.5px;color:#33455F}
+.tl .pd b{color:var(--ink)}
+.tl .pd .num{color:var(--orange);font-weight:600}
+.note{margin-top:14px;background:#F0F3F8;border-radius:8px;padding:12px 14px;font-size:13px;color:#33455F}
+.note b{color:var(--ink)}
 /* ===== 结论 ===== */
 .concl{background:var(--ink);color:#D6E0F0;border-radius:12px;padding:26px}
 .concl h3{color:#fff;font-size:18px;margin-bottom:14px}
@@ -186,6 +200,65 @@ footer a:hover{text-decoration:underline}
         </tbody>
       </table>
     </div>
+  </div>
+</section>
+
+<!-- ===== 视图：复现过程 ===== -->
+<section id="repro">
+  <div class="wrap">
+    <h2><span class="no">06</span>复现过程</h2>
+    <p class="lead">复现不是一次跑通，是先把机制验出来、再铺全量，每一步都留了可回查的记录。以下按实际执行的顺序讲。</p>
+    <ol class="tl">
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 01</div>
+          <div class="pt">环境与约束</div>
+          <div class="pd">复现放在本机 <b>D:\ygy_Document\kc_yunCompute</b>，环境用 <b>uv</b> 管理，Python 3.13，显卡是 <b>RTX 5060 Laptop 8GB</b>。开工前先确认磁盘空间放得下模型和数据，依赖全部由 uv 装进虚拟环境，不引入 conda——以后想重跑，一条命令就能恢复环境。</div>
+        </div>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 02</div>
+          <div class="pt">机制先行验证（约 10 分钟）</div>
+          <div class="pd">AEROBLADE 的立论是"<b>同分布重建误差</b>"：假图落在生成器 LDM 的潜流形上，用同源 AE 重建误差小；真图不在流形上，误差大。立论成立后面才有意义，所以先花 10 分钟把它验出来。做法：下载 <b>SD-v1-4 完整权重（约 4GB，ModelScope 镜像加速）</b>，用它本地生成一批假图——和检测任务里的假图完全同分布——再重测重建误差。结果：<b>同分布假图的重建误差确实小于真实照片</b>。机制成立，才进入全量复现。</div>
+        </div>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 03</div>
+          <div class="pt">模型组件与数据集</div>
+          <div class="pd">检测需要三组潜扩散模型的 AE 组件：<b>Kandinsky-2-1 的 movq</b>（约 258MB）、<b>SD2-base 的 VAE</b>（约 320MB）、<b>SD1-v1-1 的 VAE</b>，全部从 ModelScope 下载到 models/ 目录，不直连 HuggingFace。数据集两组各 100 张：真图取 <b>Picsum 自然照片</b>，假图全部由 <b>SD-v1-4 本地生成</b>——与 SD1 同分布、无文字水印。这两点正是最终指标高于博客口径的直接原因。</div>
+        </div>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 04</div>
+          <div class="pt">代码适配（本机复现的卡点）</div>
+          <div class="pd">官方 aeroblade 的 create_pipeline 默认从 HuggingFace Hub 拉权重，本机网络不稳，也不想每次重跑都走网络。我改了 <b>image.py</b>，加了一条<b>本地权重直连分支</b>：AutoencoderKL 和 VQModel 直接从本地目录加载，跳过 Hub。装依赖时还补了两个坑：<b>clip-interrogator 和 open-clip-torch</b> 是 inversion.py 的 import 链要用的，<b>lz4</b> 用来消除 joblib 缓存警告。改完先用 20 张 Kandinsky 冒烟——重建约 <span class="num">3.4 it/s</span>、LPIPS 约 <span class="num">13 it/s</span>，全链路通了，才跑全量。</div>
+        </div>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 05</div>
+          <div class="pt">全量运行</div>
+          <div class="pd">全量命令是官方 <b>01_detect.py</b>：真/假各 100 张 × 三个 AE × lpips_vgg_2 距离，共 6 组、<b>600 次"重建 + 感知距离打分"</b>，RTX 5060 上 <span class="num">3 分 15 秒</span>跑完；batch-size=1，8GB 显存没有压力。输出三份文件：distances.parquet、detection_results.csv、attribution_results.csv。</div>
+        </div>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <div class="tc">
+          <div class="ph">阶段 06</div>
+          <div class="pt">指标重算与对齐</div>
+          <div class="pd">官方脚本给出 AP 和 tpr@5%fpr；我又从 <b>distances.parquet</b> 重算 <b>AUC、accuracy（Youden 最优阈值）、AP</b>，与官方输出核对一致后落盘 alignment_metrics.csv。至此四个组合的完整指标齐了：SD1 最优（<span class="num">AUC 0.988</span>、<span class="num">accuracy 96%</span>、<span class="num">tpr@5%fpr 97%</span>），Kandinsky 最弱（<span class="num">0.626</span>、<span class="num">63%</span>、<span class="num">3%</span>）。</div>
+        </div>
+      </li>
+    </ol>
+    <div class="note" style="margin-top:6px"><b>一句话交代给老师</b>：假图来自 SD 系，SD1-AE 就是最强检测器——最优组合跟着假图来源走，说明机制自洽，不是复现跑偏。所有中间产物（距离矩阵、官方输出、自算指标）都在仓库 results/ 里，可逐行核对。</div>
   </div>
 </section>
 
