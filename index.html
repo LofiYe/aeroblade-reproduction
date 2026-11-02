@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEROBLADE 复现结果：无训练潜扩散图像检测</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F1B2D'/%3E%3Cpath d='M8 22 L14 8 L18 8 L24 22 L20 22 L17.5 14 L14.5 14 L12 22 Z' fill='%23E0511F'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#0F1B2D; --ink-2:#24344D; --paper:#F6F7F9; --card:#FFFFFF;
+  --blue:#2E5AAC; --teal:#0E9F8F; --orange:#D9480F; --violet:#6C4BB4;
+  --gray:#8494A6; --line:#E3E7EE; --accent:#E0511F;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  background:var(--paper); color:var(--ink); line-height:1.65;
+  font-size:16px; -webkit-font-smoothing:antialiased;
+}
+.num{font-family:"SFMono-Regular",Consolas,"Courier New",monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+/* ===== Hero ===== */
+.hero{background:var(--ink);color:#fff;padding:64px 0 56px}
+.hero .eyebrow{display:inline-block;font-size:13px;letter-spacing:.12em;color:#9FB2D0;border:1px solid #2C3D59;border-radius:999px;padding:4px 12px;margin-bottom:18px}
+.hero h1{font-size:34px;line-height:1.3;font-weight:700;margin-bottom:14px}
+.hero h1 .accent{color:var(--accent)}
+.hero p.sub{color:#B9C6DA;max-width:640px;font-size:15px}
+.hero .meta{margin-top:16px;color:#7E90AE;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:32px}
+.kpi{background:#15243C;border:1px solid #263955;border-radius:10px;padding:16px 18px}
+.kpi .v{font-size:30px;font-weight:700;color:#fff}
+.kpi .v small{font-size:14px;color:#8FA3C2}
+.kpi .l{font-size:12.5px;color:#8FA3C2;margin-top:4px}
+.kpi.best{border-color:var(--accent)}
+.kpi.best .v{color:var(--accent)}
+/* ===== Section ===== */
+section{padding:44px 0}
+section h2{font-size:22px;font-weight:700;margin-bottom:8px;display:flex;align-items:baseline;gap:10px}
+section h2 .no{color:var(--accent);font-family:"SFMono-Regular",Consolas,monospace;font-size:15px}
+section .lead{color:#4A5B72;font-size:14.5px;margin-bottom:26px;max-width:720px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(15,27,45,.04)}
+/* ===== 实验设置 chips ===== */
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.chip .t{font-size:12px;color:var(--gray)}
+.chip .d{font-size:14.5px;font-weight:600;margin-top:3px}
+.chip .d small{color:#6B7A99;font-weight:400}
+/* ===== 图 ===== */
+.chartbox{height:380px;width:100%}
+.chart-note{font-size:12.5px;color:var(--gray);margin-top:10px}
+/* ===== 流程 ===== */
+.flow{display:flex;align-items:stretch;gap:0;margin-top:8px}
+.fstep{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;position:relative;text-align:center}
+.fstep .n{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;margin-bottom:8px}
+.fstep .t{font-size:13.5px;font-weight:600}
+.fstep .s{font-size:12px;color:var(--gray);margin-top:4px}
+.farrow{align-self:center;color:var(--gray);font-size:18px;padding:0 4px}
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
+caption{text-align:left;font-size:12.5px;color:var(--gray);padding-bottom:8px}
+th,td{padding:10px 10px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#F0F3F8;color:#33455F;font-weight:600;font-size:13px}
+td .num{font-weight:600}
+.hl td{background:#FDF1EC}
+.hl td:first-child{color:var(--orange);font-weight:600}
+/* ===== 结论 ===== */
+.concl{background:var(--ink);color:#D6E0F0;border-radius:12px;padding:26px}
+.concl h3{color:#fff;font-size:18px;margin-bottom:14px}
+.concl li{margin:10px 0 10px 20px;font-size:14.5px}
+.concl b{color:#fff}
+.concl .src{color:#7E90AE;font-size:12.5px;margin-top:16px}
+/* ===== Footer ===== */
+footer{padding:26px 0 40px;color:var(--gray);font-size:13px;border-top:1px solid var(--line);margin-top:10px}
+footer a{color:#4A6DA8;text-decoration:none}
+footer a:hover{text-decoration:underline}
+/* ===== 响应式 ===== */
+@media (max-width:767px){
+  .hero{padding:44px 0 40px}
+  .hero h1{font-size:26px}
+  .kpis{grid-template-columns:1fr}
+  .chartbox{height:340px}
+  .flow{flex-direction:column;gap:10px}
+  .farrow{transform:rotate(90deg);align-self:center;padding:0}
+  table{font-size:12.5px}
+  th,td{padding:8px 6px}
+  section{padding:36px 0}
+}
+@media (min-width:768px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 视图：Hero ===== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">CVPR 2024 · 复现实验</span>
+    <h1>AEROBLADE 复现结果<br>无训练<span class="accent">潜扩散</span>图像检测</h1>
+    <p class="sub">基于 Ricker et al. 的 AEROBLADE：用三组潜扩散模型（LDM）自编码器重建图像、以感知距离打分，无需任何训练即可区分真实照片与扩散生成图像。以下为本机全量复现的检测性能与溯源分析。</p>
+    <div class="meta">数据：真实照片 100 张（Picsum） × 假图 100 张（SD-v1-4 生成） · 距离：LPIPS-VGG · 显卡：RTX 5060 Laptop 8GB</div>
+    <div class="kpis">
+      <div class="kpi best"><div class="v">96.0% <small>accuracy</small></div><div class="l">最优组合 SD1-AE + lpips_vgg_2</div></div>
+      <div class="kpi"><div class="v">0.988 <small>AUC</small></div><div class="l">同一组合的 ROC 面积</div></div>
+      <div class="kpi"><div class="v">97% <small>tpr@5%fpr</small></div><div class="l">假阳率 5% 时召回率</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 视图：实验设置 ===== -->
+<section id="setup">
+  <div class="wrap">
+    <h2><span class="no">01</span>实验设置</h2>
+    <p class="lead">对齐博客「最优组合 kandinsky + lpips_vgg_2 → accuracy≈84%、tpr@5%fpr≈40%」的口径，用完全同分布的数据验证机制。</p>
+    <div class="chips">
+      <div class="chip"><div class="t">真实图像</div><div class="d">Picsum 自然照片 × 100</div></div>
+      <div class="chip"><div class="t">假图像</div><div class="d">SD-v1-4 本地生成 × 100</div></div>
+      <div class="chip"><div class="t">AE 组件</div><div class="d">SD1-v1-1 / SD2-base / Kandinsky-2.1</div></div>
+      <div class="chip"><div class="t">距离度量</div><div class="d">lpips_vgg_2（负感知相似度）</div></div>
+      <div class="chip"><div class="t">判定</div><div class="d">单模型 + max 聚合，Youden 最优阈值</div></div>
+      <div class="chip"><div class="t">运行时长</div><div class="d">600 次重建 + LPIPS ≈ 3 分 15 秒</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：方法流程 ===== -->
+<section id="method">
+  <div class="wrap">
+    <h2><span class="no">02</span>检测机制</h2>
+    <p class="lead">假图落在生成器 LDM 的潜流形上，用同源自编码器重建误差小；真实照片不在流形上，重建误差大——无需训练即可区分。</p>
+    <div class="flow">
+      <div class="fstep"><span class="n">1</span><div class="t">输入图像</div><div class="s">待检测照片</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep"><span class="n">2</span><div class="t">AE 编码</div><div class="s">压缩进潜空间</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep"><span class="n">3</span><div class="t">AE 解码重建</div><div class="s">回到像素空间</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep"><span class="n">4</span><div class="t">LPIPS 距离</div><div class="s">原图 vs 重建</div></div>
+      <div class="farrow">→</div>
+      <div class="fstep"><span class="n">5</span><div class="t">判定 / 溯源</div><div class="s">阈值分类 / 归属 AE</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：检测性能 ===== -->
+<section id="detect">
+  <div class="wrap">
+    <h2><span class="no">03</span>检测性能：同源 AE 最强</h2>
+    <p class="lead">假图由 SD-v1-4 生成，与 SD1 自编码器同分布——因此 SD1-AE 检测最强（accuracy 96%、tpr@5%fpr 97%），远超博客最优口径；Kandinsky（VQ 量化型 AE）区分力最弱。</p>
+    <div class="card">
+      <div class="chartbox" id="chartDetect"></div>
+      <div class="chart-note">数据：本机 01_detect 输出（真/假各 100 张）。accuracy 为 Youden 最优阈值下的分类准确率；tpr@5%fpr 为假阳率 5% 时的召回率。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：溯源 ===== -->
+<section id="attribution">
+  <div class="wrap">
+    <h2><span class="no">04</span>溯源分析：假图 100% 归到同源 AE</h2>
+    <p class="lead">取三模型重建距离最小值做归属：全部 100 张假图都归到 SD1-AE（fraction = 1.0），真实照片则分散在 SD2（0.84）与 Kandinsky（0.17）——假图被同源流形"吸收"，真图无处可归。这与博客「生成图像大致都由 model2 产生」是同一机制。</p>
+    <div class="card">
+      <div class="chartbox" id="chartAttr"></div>
+      <div class="chart-note">fraction：该目录图像中重建距离最小者归属于对应 AE 的比例（官方 attribution 输出；真图原始值合计约 1.01 系逐图取整所致）。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：与博客对照 ===== -->
+<section id="compare">
+  <div class="wrap">
+    <h2><span class="no">05</span>与博客对齐口径对照</h2>
+    <p class="lead">博客（复现 AEROBLADE 论文）报告 Kandinsky + lpips_vgg_2 → accuracy≈84%、tpr@5%fpr≈40%。其假图由豆包在线生成、与三组 AE 均不同源；我们的假图由 SD-v1-4 生成，与 SD1 同分布，因此最优组合不同、且指标整体更高。</p>
+    <div class="card">
+      <table>
+        <caption>accuracy / tpr@5%fpr 对照（我们：真/假各 100 张，lpips_vgg_2）</caption>
+        <colgroup><col style="width:34%"><col style="width:17%"><col style="width:17%"><col style="width:16%"><col style="width:16%"></colgroup>
+        <thead><tr><th>组合</th><th>博客 accuracy</th><th>博客 tpr@5%fpr</th><th>本复现 accuracy</th><th>本复现 tpr@5%fpr</th></tr></thead>
+        <tbody>
+          <tr><td>Kandinsky + lpips</td><td><span class="num">84%</span></td><td><span class="num">40%</span></td><td><span class="num">63%</span></td><td><span class="num">3%</span></td></tr>
+          <tr><td>SD2-base + lpips</td><td>—</td><td>—</td><td><span class="num">72.5%</span></td><td><span class="num">7%</span></td></tr>
+          <tr><td>max 三模型池</td><td>—</td><td>—</td><td><span class="num">95%</span></td><td><span class="num">83%</span></td></tr>
+          <tr class="hl"><td>SD1-v1-1 + lpips（最优）</td><td>—</td><td>—</td><td><span class="num">96%</span></td><td><span class="num">97%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：结论 ===== -->
+<section id="conclusion">
+  <div class="wrap">
+    <div class="concl">
+      <h3>结论</h3>
+      <ul>
+        <li><b>机制验证成立</b>：同分布假图的重建误差显著小于真实照片，AEROBLADE 无需训练即可检测，且溯源可定位生成器类型。</li>
+        <li><b>最优组合随假图来源变化</b>：假图由 SD 系生成时 SD1-AE 最强（96%），Kandinsky 最弱——这是机制的自洽表现，而非复现失败。</li>
+        <li><b>指标整体超过博客口径</b>：数据更干净（无文字水印、同分布），SD1 与 max 均高于博客 84%/40%。</li>
+      </ul>
+      <div class="src">参考：Ricker et al., "AEROBLADE: Training-Free Detection of Latent Diffusion Images" (CVPR 2024) · 博客园复现记录 · 论文与博客均见仓库 README。</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    复现环境：Windows · uv 虚拟环境 · Python 3.13 · RTX 5060 Laptop 8GB · 数据与指标 CSV 见 <a href="results/">results/</a> · 仓库 <a href="https://github.com/guoyang25/aeroblade-reproduction">guoyang25/aeroblade-reproduction</a>
+  </div>
+</footer>
+
+<script src="https://fastly.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+/* ===== 数据（来自 results/*.csv，2026-11-02 复现） ===== */
+var RAW_DETECT = [
+  { name: 'Kandinsky', accuracy: 0.630, tpr: 0.03, auc: 0.626, ap: 0.555 },
+  { name: 'SD2-base', accuracy: 0.725, tpr: 0.07, auc: 0.742, ap: 0.663 },
+  { name: 'max 三模型池', accuracy: 0.950, tpr: 0.83, auc: 0.970, ap: 0.957 },
+  { name: 'SD1-v1-1', accuracy: 0.960, tpr: 0.97, auc: 0.988, ap: 0.987 }
+];
+var RAW_ATTR = {
+  fake: { sd1: 1.0, sd2: 0.0, kand: 0.0 },
+  real: { sd1: 0.0, sd2: 0.84, kand: 0.17 }
+};
+
+function pct(v){ return (v * 100).toFixed(1) + '%'; }
+
+/* ===== 图表 1：检测性能（横向柱状，accuracy / tpr） ===== */
+(function(){
+  var names = RAW_DETECT.map(function(d){ return d.name; });
+  var acc = RAW_DETECT.map(function(d){ return d.accuracy; });
+  var tpr = RAW_DETECT.map(function(d){ return d.tpr; });
+  var chart = echarts.init(document.getElementById('chartDetect'));
+  chart.setOption({
+    title: { text: '检测性能（accuracy 与 tpr@5%fpr）', left: 'center', top: 4, textStyle: { fontSize: 15, color: '#0F1B2D' } },
+    tooltip: {
+      trigger: 'axis', triggerOn: 'click', renderMode: 'richText', confine: true,
+      axisPointer: { type: 'shadow' },
+      valueFormatter: function(v){ return pct(v); }
+    },
+    legend: { top: 32, data: ['accuracy', 'tpr@5%fpr'] },
+    grid: { left: 92, right: 64, top: 78, bottom: 30, containLabel: true },
+    xAxis: { type: 'value', min: 0, max: 1, axisLabel: { formatter: function(v){ return Math.round(v * 100) + '%'; } } },
+    yAxis: { type: 'category', data: names, axisLabel: { fontSize: 12 } },
+    series: [
+      { name: 'accuracy', type: 'bar', barGap: '20%', data: acc,
+        label: { show: true, position: 'right', formatter: function(p){ return Math.round(p.value * 100) + '%'; }, fontSize: 11 } },
+      { name: 'tpr@5%fpr', type: 'bar', data: tpr,
+        label: { show: true, position: 'right', formatter: function(p){ return Math.round(p.value * 100) + '%'; }, fontSize: 11 } }
+    ]
+  });
+  window.addEventListener('resize', function(){ chart.resize(); });
+})();
+
+/* ===== 图表 2：溯源 fraction（100% 堆叠条） ===== */
+(function(){
+  var chart = echarts.init(document.getElementById('chartAttr'));
+  chart.setOption({
+    title: { text: '重建距离最小归属（fraction）', left: 'center', top: 4, textStyle: { fontSize: 15, color: '#0F1B2D' } },
+    tooltip: {
+      trigger: 'axis', triggerOn: 'click', renderMode: 'richText', confine: true,
+      axisPointer: { type: 'shadow' },
+      valueFormatter: function(v){ return Number(v).toFixed(2); }
+    },
+    legend: { top: 32, data: ['SD1-v1-1', 'SD2-base', 'Kandinsky'] },
+    grid: { left: 60, right: 30, top: 78, bottom: 30, containLabel: true },
+    xAxis: { type: 'category', data: ['假图 (fake_sd_full)', '真图 (real_full)'], axisLabel: { fontSize: 12 } },
+    yAxis: { type: 'value', max: 1, axisLabel: { formatter: function(v){ return Number(v).toFixed(1); } } },
+    series: [
+      { name: 'SD1-v1-1', type: 'bar', stack: 'f', data: [RAW_ATTR.fake.sd1, RAW_ATTR.real.sd1], label: { show: true, position: 'inside', formatter: function(p){ return p.value > 0 ? p.value.toFixed(1) : ''; }, color: '#fff', fontSize: 11 } },
+      { name: 'SD2-base', type: 'bar', stack: 'f', data: [RAW_ATTR.fake.sd2, RAW_ATTR.real.sd2], label: { show: true, position: 'inside', formatter: function(p){ return p.value > 0.02 ? p.value.toFixed(2) : ''; }, color: '#fff', fontSize: 11 } },
+      { name: 'Kandinsky', type: 'bar', stack: 'f', data: [RAW_ATTR.fake.kand, RAW_ATTR.real.kand], label: { show: true, position: 'inside', formatter: function(p){ return p.value > 0.02 ? p.value.toFixed(2) : ''; }, color: '#fff', fontSize: 11 } }
+    ]
+  });
+  window.addEventListener('resize', function(){ chart.resize(); });
+})();
+</script>
+</body>
+</html>

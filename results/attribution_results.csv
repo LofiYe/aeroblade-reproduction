@@ -1,0 +1,7 @@
+,dir,transform,distance_metric,repo_id,fraction
+0,D:\ygy_Document\kc_yunCompute\data\fake_sd_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\stable-diffusion-v1-1,1.0
+1,D:\ygy_Document\kc_yunCompute\data\fake_sd_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\stable-diffusion-2-base,0.0
+2,D:\ygy_Document\kc_yunCompute\data\fake_sd_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\kandinsky-2-1,0.0
+3,D:\ygy_Document\kc_yunCompute\data\real_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\stable-diffusion-v1-1,0.0
+4,D:\ygy_Document\kc_yunCompute\data\real_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\stable-diffusion-2-base,0.84
+5,D:\ygy_Document\kc_yunCompute\data\real_full,clean,lpips_vgg_2,D:\ygy_Document\kc_yunCompute\models\kandinsky-2-1,0.17
