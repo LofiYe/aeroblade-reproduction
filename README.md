@@ -2,7 +2,7 @@
 
 复现 [AEROBLADE: Training-Free Detection of Latent Diffusion Images](https://github.com/umd-plum/aeroblade)（Ricker et al., CVPR 2024）：无训练潜扩散图像检测。本仓库包含本机全量复现的**检测性能**与**溯源分析**，以及对应的可视化页面（GitHub Pages）。
 
-在线可视化页面：<https://guoyang25.github.io/aeroblade-reproduction/>
+在线可视化页面：<https://lofiye.github.io/aeroblade-reproduction/>
 
 ## 复现结果（一句话）
 
